@@ -8,10 +8,12 @@ def request_to_the_server():
     return response.json()
 
 def main():
+      
+	deltas = []
     
 	for _ in range(5):
             
-		#start_time = datetime.now(timezone.utc)
+		start_time = datetime.now(timezone.utc)
                 
 		# вывод запроса
 		data = request_to_the_server()
@@ -25,10 +27,13 @@ def main():
 		local_time = datetime.fromtimestamp(timestamp, timezone.utc).astimezone()
 		# получение названия временной зоны
 		timezone_name = local_time.astimezone(pytz.timezone('Europe/Moscow')).tzname()
-		print(f"Время начальное:, {local_time.strftime('%Y-%m-%d %H:%M:%S')} ({timezone_name})")
+		print(f"Время запроса: {local_time.strftime('%Y-%m-%d %H:%M:%S')} ({timezone_name})")
 
-            
-
+        # Вычисление дельты времени на запрос
+		end_time = datetime.now(timezone.utc)
+		delta = (end_time - start_time).total_seconds()
+		deltas.append(delta)
+		print(f"Средняя дельта: {delta:.6f}")
 
    
 if __name__ == '__main__':
