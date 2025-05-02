@@ -14,4 +14,3 @@ def install_repo(repo_url, dest_dir):
     repo = git.Repo.clone_from(repo_url, dest_dir)
     logger.info(f"Репозиторий успешно клонирован в {dest_dir}")
     return repo
-
