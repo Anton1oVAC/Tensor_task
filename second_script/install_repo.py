@@ -5,7 +5,6 @@ import git
 # Клонирование репо
 def install_repo(repo_url, dest_dir):
     
-    # Проверяем, существует ли директория
     if os.path.exists(dest_dir):
         logger.error(f"Директория {dest_dir} уже существует. Завершение.")
         return None

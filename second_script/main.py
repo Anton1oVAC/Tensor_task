@@ -1,15 +1,18 @@
 from log import logger
 from install_repo import install_repo
 from clean_dir import clean_directory
+from create_arch import create_archive
 
 repo_url = 'https://github.com/Anton1oVAC/s21_Matrix_oop'
-dest_dir = 's21'
+dest_dir = 's21_Matrix_oop'
 source_path = 'src'
+version = '0.1'
 
 
 def main():
     try:
-        repo_dir = install_repo(repo_url, dest_dir); clean_directory(dest_dir, source_path)
+        # Временный костыль 
+        repo_dir = install_repo(repo_url, dest_dir); clean_directory(dest_dir, source_path); create_archive(source_path)
         if repo_dir is None:  # Если директория уже существует
             return 1
         
