@@ -9,12 +9,11 @@ def clean_directory(repo_path, source_path):
 		logger.error(f"Путь {full_source_path} не найден")
 		raise FileNotFoundError(f"Путь {full_source_path} не найден!")
 	
-	# Нужно ли? Или можно заного перезаписать? 
 	if os.path.exists(source_path):
 		logger.error(f"Директория {full_source_path} уже существует")
 		return None
 	
-	logger.info(f"Удаление, остается {source_path}")
+	logger.info(f"Удаление {repo_path}, остается {source_path}")
 
 	temp_dir = source_path
 	if os.path.exists(temp_dir):
