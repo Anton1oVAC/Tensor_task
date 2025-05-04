@@ -25,6 +25,17 @@ for unit in $units; do
     fi
     
     echo "Путь к файлу юнита: $unit_path"
+
+    systemctl stop $unit
+
+    # Извелкание рабочей директории и параметр запуска юнита
+    working_dir=$(systemctl show "$unit" -p WorkingDirectory | cut -d'=' -f2)
+    exec_start_path=$(systemctl show "$unit" -p ExecStart |  sed 's/^ExecStart=//' | awk '{print $2}')
+    exec_start_argv=$(systemctl show "$unit" -p ExecStart | sed 's/^ExecStart=//' | awk -F'argv\\[\\]=' '{print $2}' | sed 's/;.*//')
+
+    echo "Рабочая директория: $working_dir"
+    echo "Путь исп.файла: $exec_start_path"
+    echo "Аргументы исп.файла: $exec_start_argv"
     
    
 done
