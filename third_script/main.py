@@ -36,9 +36,27 @@ def generate_version_numbers(template):
     return sorted(list(set(versions))[:2])
 
 
+def compare_versions(v1, v2):
+    v1_parts = list(map(int, v1.split('.')))
+    v2_parts = list(map(int, v2.split('.')))
+    
+    for p1, p2 in zip(v1_parts, v2_parts):
+        if p1 < p2:
+            return -1
+        elif p1 > p2:
+            return 1
+    
+    if len(v1_parts) < len(v2_parts):
+        return -1
+    elif len(v1_parts) > len(v2_parts):
+        return 1
+    
+    return 0
+
 
 def main():
     args = parse_args()
+    current_version = args.version
     config_file = args.config_file
     
     try:
@@ -62,5 +80,10 @@ def main():
     for version in unique_versions:
         print(version)
     
+    print(f"\nВерсии старше текущей {current_version}:")
+    older_versions = [v for v in unique_versions if compare_versions(v, current_version) < 0]
+    for version in older_versions:
+        print(version)
+
 if __name__ == '__main__':
     main()
