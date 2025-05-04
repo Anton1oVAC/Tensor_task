@@ -11,10 +11,7 @@ fi
 echo "Найдены следующие юниты:"
 echo "$units"
 
-
-# Обрабатка каждого юнита
 for unit in $units; do
-    echo "Обрабатываю юнит: $unit"
     
     # Получение пути к файлу юнита
     unit_path=$(systemctl show -p FragmentPath "$unit" | cut -d= -f2)
@@ -26,24 +23,49 @@ for unit in $units; do
     
     echo "Путь к файлу юнита: $unit_path"
 
-    systemctl stop $unit
+    # Остановка сервиса
+    systemctl stop "$unit" || { echo "Ошибка остановки $unit"; exit 1; }
 
-    # Извелкание рабочей директории и параметр запуска юнита
-    working_dir=$(systemctl show "$unit" -p WorkingDirectory | cut -d'=' -f2)
-    exec_start_path=$(systemctl show "$unit" -p ExecStart |  sed 's/^ExecStart=//' | awk '{print $2}')
+    # Извлечение параметров
+    working_dir=$(systemctl show -p WorkingDirectory --value "$unit")
+    exec_start_full=$(systemctl show -p ExecStart --value "$unit")
+    
+    # Разбор ExecStart (удаляем { и } если есть)
+    exec_start_clean=$(echo "$exec_start_full" | sed 's/^{ //; s/ }$//')
+    exec_start_cmd=$(echo "$exec_start_clean" | grep -oP 'path=\K[^;]+')
+    exec_start_args=$(echo "$exec_start_clean" | grep -oP 'argv\[\]=\K[^;]+' | sed "s|^$exec_start_cmd ||")
 
     echo "Рабочая директория: $working_dir"
-    echo "Путь исп.файла: $exec_start_path"
+    echo "Команда запуска: $exec_start_cmd"
+    echo "Аргументы: $exec_start_args"
 
+    # Определение новых путей
+    service_name=${unit#foobar-}
+    service_name=${service_name%.service}
+    new_dir="/srv/data/$service_name"
+    new_exec="/srv/data/$service_name/$(basename "$exec_start_cmd")"
 
-    mkdir -p "/srv/data/$(basename "$working_dir")"
+    # Создание новой директории и копирование файлов
+    echo "Создание новой директории $new_dir"
+    mkdir -p "$new_dir" || { echo "Ошибка создания директории"; exit 1; }
+    cp -a "$working_dir"/. "$new_dir"/ || { echo "Ошибка копирования файлов"; exit 1; }
 
-    cp -a "$working_dir"/. "/srv/data/$(basename "$working_dir")/"
+    # Создание override.conf
+    override_dir="/etc/systemd/system/$unit.d"
+    mkdir -p "$override_dir"
+    
+    echo "Создание override.conf с новыми путями"
+    cat > "$override_dir/override.conf" <<EOF
+[Service]
+WorkingDirectory=$new_dir
+ExecStart=$new_exec $exec_start_args
+EOF
 
-    systemctl daemon-reload
-
-    echo "Запуск $unit"
-    systemctl start "$unit"
-   
-    systemctl status $unit
+    # Перезагрузка конфигурации и запуск
+    systemctl daemon-reload || { echo "Ошибка daemon-reload"; exit 1; }
+    systemctl reset-failed "$unit" 2>/dev/null
+    systemctl start "$unit" || { echo "Ошибка запуска $unit"; exit 1; }
+    
+    echo "Проверка статуса:"
+    systemctl status "$unit" --no-pager
 done
